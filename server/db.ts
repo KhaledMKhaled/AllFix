@@ -229,12 +229,12 @@ export async function getDashboardSummary() {
   const contractRows = db ? await db.select().from(contracts) : Array.from(memoryContracts.values());
   const leadRows = db ? await db.select().from(leads) : memoryLeads;
   const unique = (name: string) => new Set(eventRows.filter(item => item.eventName === name).map(item => item.visitorId)).size;
-  const sources = new Map<string, number>();
-  eventRows.forEach(item => { const source = (item.firstTouch as Record<string, string> | null)?.utm_source ?? "مباشر"; sources.set(source, (sources.get(source) ?? 0) + 1); });
+  const sources = new Map<string, Set<string>>();
+  eventRows.forEach(item => { const source = (item.firstTouch as Record<string, string> | null)?.utm_source ?? "مباشر"; const visitorsForSource = sources.get(source) ?? new Set<string>(); visitorsForSource.add(item.visitorId); sources.set(source, visitorsForSource); });
   return {
     overview: { visitors: new Set(eventRows.map(item => item.visitorId)).size, sessions: new Set(eventRows.map(item => item.sessionId)).size, leads: leadRows.length, orders: orderRows.length, paid: orderRows.filter(item => item.status === "PAID_DEMO").length, contracts: contractRows.length },
     funnel: ["page_view", "persona_resolved", "pricing_viewed", "plan_selected", "checkout_started", "order_created", "purchase_completed", "contract_generated", "contract_downloaded"].map(name => ({ name, value: unique(name) })),
-    sources: Array.from(sources.entries()).map(([source, value]) => ({ source, value })).slice(0, 6),
+    sources: Array.from(sources.entries()).map(([source, visitors]) => ({ source, value: visitors.size })).sort((a, b) => b.value - a.value).slice(0, 6),
     recentEvents: eventRows.slice(0, 12).map(item => ({ eventName: item.eventName, pagePath: item.pagePath, persona: item.persona, createdAt: item.createdAt })),
     health: { rejected: 0, duplicates: 0, missingUtmRate: eventRows.length ? Math.round((eventRows.filter(item => !(item.firstTouch as Record<string, string> | null)?.utm_source).length / eventRows.length) * 100) : 0, lastEventAt: eventRows[0]?.createdAt ?? null, analyticsStatus: "TEST" },
   };
