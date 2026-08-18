@@ -1,5 +1,6 @@
 import content from "@/content/poc.ar.json";
 import { Button } from "@/components/ui/button";
+import { usePocTracking } from "@/hooks/usePocTracking";
 import { formatEgp, PLANS } from "@shared/poc";
 import { trpc } from "@/lib/trpc";
 import {
@@ -14,19 +15,28 @@ import {
   UserCheck,
   CalendarCheck
 } from "lucide-react";
-import { useLocation, useRoute } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
+import { useEffect, useRef } from "react";
 
 export default function Success() {
   const [, params] = useRoute("/success/:token");
   const [, setLocation] = useLocation();
   const token = params?.token ?? "";
+  const track = usePocTracking();
+  const purchaseTracked = useRef(false);
   const order = trpc.poc.getOrder.useQuery({ token }, { enabled: Boolean(token) });
+
+  useEffect(() => {
+    if (!order.data || order.data.status !== "PAID_DEMO" || purchaseTracked.current) return;
+    purchaseTracked.current = true;
+    track("purchase", { persona: order.data.persona as "firm" | "company", uiContext: "success", properties: { transaction_id: order.data.orderId, value: order.data.totalPiastres / 100, currency: "EGP", items: [{ item_id: order.data.planName, quantity: 1 }, ...(order.data.addons ?? []).map((addon) => ({ item_id: addon.sku, quantity: addon.quantity }))] } });
+  }, [order.data, track]);
 
   if (order.isLoading) {
     return (
       <div className="grid min-h-screen place-items-center bg-[#FBFBFF] text-[#4046B5]">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#4046B5] border-t-transparent" />
+          <div className="mx-auto h-12 w-12 motion-safe:animate-spin rounded-full border-4 border-[#4046B5] border-t-transparent" />
           <p className="mt-4 text-sm font-extrabold text-[#07081A]">جارٍ تأكيد الاشتراك وتوليد إيصال السداد...</p>
         </div>
       </div>
@@ -42,12 +52,7 @@ export default function Success() {
           <p className="mt-2 text-xs leading-6 text-[#5b5c72]">
             يرجى اعتماد الدفع التجريبي أولاً لتوليد إشعار الاشتراك والعقد.
           </p>
-          <a
-            href="/checkout"
-            className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#4046B5] px-6 text-xs font-extrabold text-white"
-          >
-            الرجوع إلى صفحة الاشتراك
-          </a>
+          <Link href="/checkout" className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#4046B5] px-6 text-xs font-extrabold text-white">الرجوع إلى صفحة الاشتراك</Link>
         </div>
       </div>
     );
@@ -59,9 +64,9 @@ export default function Success() {
       <div className="mx-auto max-w-2xl">
         {/* Top Logo */}
         <div className="mb-6 flex justify-center">
-          <a href="/">
-            <img src="/brand/mofawtar-badge-logo.png" alt="مفوتر" className="h-10 w-auto" />
-          </a>
+          <Link href="/">
+            <img src="/brand/mofawtar-badge-logo.png" alt="موفوتر" className="h-10 w-auto" />
+          </Link>
         </div>
 
         {/* Main Success Card */}
@@ -99,13 +104,13 @@ export default function Success() {
               <div>
                 <p className="text-[11px] text-[#64657a]">رقم العملية المرجعي</p>
                 <p className="font-[Inter] text-xs font-black text-[#4046B5]" dir="ltr">
-                  MOF-{token.slice(0, 8).toUpperCase()}
+                  {order.data.orderId}
                 </p>
               </div>
               <div className="text-left">
                 <p className="text-[11px] text-[#64657a]">تاريخ ووقت المعاملة</p>
                 <p className="text-xs font-bold" dir="ltr">
-                  {new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })}
+                  {new Intl.DateTimeFormat("ar-EG-u-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" }).format(new Date(order.data.paidAt ?? order.data.expiresAt))}
                 </p>
               </div>
             </div>
@@ -122,7 +127,7 @@ export default function Success() {
               <div>
                 <span className="text-[#64657a]">دورة الفوترة:</span>
                 <p className="font-extrabold text-[#07081A] mt-0.5">
-                  اشتراك سنوي شامل معتمد (12 شهرًا)
+                  اشتراك سنوي (12 شهرًا)
                 </p>
               </div>
               <div>
@@ -131,11 +136,16 @@ export default function Success() {
                   {formatEgp(order.data.totalPiastres)}
                 </p>
               </div>
+              <div className="col-span-2 border-t border-[#4046B5]/10 pt-3">
+                <div className="flex justify-between"><span className="text-[#64657a]">الإجمالي قبل الخصم:</span><strong>{formatEgp(order.data.subtotalPiastres)}</strong></div>
+                <div className="mt-1 flex justify-between"><span className="text-[#64657a]">الخصم:</span><strong className="text-[#4046B5]">- {formatEgp(order.data.discountPiastres)}</strong></div>
+                <div className="mt-1 flex justify-between"><span className="text-[#64657a]">ضريبة القيمة المضافة 14%:</span><strong>{formatEgp(order.data.vatPiastres)}</strong></div>
+              </div>
               {order.data.addons && order.data.addons.length > 0 && (
                 <div className="col-span-2 border-t border-[#4046B5]/10 pt-3">
                   <span className="text-[#64657a] block mb-1">الإضافات والخدمات المعتمدة:</span>
                   <div className="flex flex-wrap gap-2">
-                    {order.data.addons.map((a: any) => (
+                    {order.data.addons.map((a) => (
                       <span key={a.sku || a.name} className="rounded-lg bg-[#4046B5]/10 px-2.5 py-1 text-[11px] font-bold text-[#4046B5]">
                         ✓ {a.name} {a.quantity > 1 ? `(العدد: ${a.quantity})` : ""}
                       </span>
@@ -155,7 +165,7 @@ export default function Success() {
                   1
                 </span>
                 <span className="font-bold text-[#07081A]">
-                  توثيق وتوقيع العقد الإلكتروني الرسمي للخدمة (الآن).
+                  توثيق وقبول العقد الإلكتروني للخدمة (الآن).
                 </span>
               </div>
 
@@ -163,14 +173,14 @@ export default function Success() {
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#ECECF7] font-black text-[#4046B5] text-[11px]">
                   2
                 </span>
-                <span>إرسال بيانات تسجيل الدخول وتطبيق الموبايل على الواتساب والإيميل.</span>
+                <span>هيوصلك ملخص الخطوات التالية على القناة المتاحة بعد المراجعة.</span>
               </div>
 
               <div className="flex items-center gap-3 rounded-2xl border border-[#4046B5]/10 bg-white p-3.5 text-xs text-[#5b5c72]">
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#ECECF7] font-black text-[#4046B5] text-[11px]">
                   3
                 </span>
-                <span>حجز جلسة إعداد وتدريب مجانية 1-on-1 مع مهندس الدعم الفني.</span>
+                <span>لو احتجت مساعدة، فريق الدعم يوضح لك الخطوة التالية.</span>
               </div>
             </div>
           </div>
@@ -178,16 +188,18 @@ export default function Success() {
           {/* Primary Action Button */}
           <Button
             onClick={() => setLocation(`/contract/${token}`)}
-            className="mt-8 h-14 w-full rounded-2xl bg-gradient-to-r from-[#4046B5] to-[#272d82] text-base font-black text-white shadow-lg shadow-[#4046B5]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#4046B5]/40 hover:scale-[1.01] active:scale-99"
+            className="mt-8 h-14 w-full rounded-2xl bg-gradient-to-r from-[#4046B5] to-[#272d82] text-base font-black text-white shadow-lg shadow-[#4046B5]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#4046B5]/40 hover:scale-[1.01] active:scale-95"
           >
             الانتقال لتوثيق العقد الإلكتروني الرسمي
-            <ArrowLeft className="mr-2 h-5 w-5" />
+            <ArrowLeft className="me-2 h-5 w-5" />
           </Button>
+
+          <Button type="button" variant="outline" onClick={() => window.print()} className="mt-3 h-11 w-full rounded-xl border-[#4046B5]/20 text-xs font-black text-[#4046B5]">تنزيل / طباعة الإيصال</Button>
 
           {/* WhatsApp Concierge Support */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs font-bold text-[#64657a]">
             <a
-              href="https://wa.me/201000000000"
+              href="https://wa.me/201050996319"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-[#10B981] hover:underline"

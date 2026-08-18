@@ -9,12 +9,15 @@ import Contract from "./pages/Contract";
 import Dashboard from "./pages/Dashboard";
 import DemoPayment from "./pages/DemoPayment";
 import Home from "./pages/Home";
+import PersonaGate from "./pages/PersonaGate";
 import PaymentProcessing from "./pages/PaymentProcessing";
 import Success from "./pages/Success";
 
 function Router() {
   return <Switch>
-    <Route path="/" component={Home} />
+    <Route path="/" component={PersonaGate} />
+    <Route path="/accounting-offices"><Home fixedPersona="firm" /></Route>
+    <Route path="/companies"><Home fixedPersona="company" /></Route>
     <Route path="/checkout" component={Checkout} />
     <Route path="/demo-payment/:token" component={DemoPayment} />
     <Route path="/payment-processing/:token" component={PaymentProcessing} />

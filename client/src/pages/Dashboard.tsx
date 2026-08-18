@@ -26,8 +26,13 @@ const labels: Record<string, string> = {
   checkout_started: "بدء إتمام الطلب Checkout",
   order_created: "توليد أمر الشراء",
   purchase_completed: "اعتماد الدفع التجريبي",
-  contract_generated: "توثيق العقد الإلكتروني",
-  contract_downloaded: "تنزيل نسخة PDF للعقد",
+  contract_generated: "توليد نموذج العقد التجريبي",
+  contract_downloaded: "تنزيل نسخة PDF للنموذج",
+  persona_gate_shown: "عرض بوابة اختيار المسار",
+  payment_page_viewed: "عرض صفحة الدفع التجريبية",
+  payment_processing_started: "بدء متابعة حالة الدفع",
+  payment_processing_completed: "اكتمال الدفع التجريبي",
+  purchase: "تسجيل تحويل تجريبي",
 };
 
 export default function Dashboard() {
@@ -41,28 +46,28 @@ export default function Dashboard() {
           label: content.dashboard.visitors,
           value: data.overview.visitors,
           icon: UsersRound,
-          trend: "+28.4% هذا الأسبوع",
+          trend: "إجمالي الزوار المسجلين",
           color: "text-[#4046B5] bg-[#ECECF7]",
         },
         {
           label: content.dashboard.leads,
           value: data.overview.leads,
           icon: Activity,
-          trend: "معدل تفاعل 42%",
+          trend: "إجمالي العملاء المحتملين",
           color: "text-[#10B981] bg-[#ECFDF5]",
         },
         {
           label: content.dashboard.paid,
           value: data.overview.paid,
           icon: ChartNoAxesCombined,
-          trend: "تحويل مكتمل",
+          trend: "دفعات PoC معتمدة",
           color: "text-[#F59E0B] bg-[#FFFBEB]",
         },
         {
           label: content.dashboard.contracts,
           value: data.overview.contracts,
           icon: FileText,
-          trend: "عقود موثقة رسميًا",
+          trend: "نماذج عقود مولّدة",
           color: "text-[#8B5CF6] bg-[#F5F3FF]",
         },
       ]
@@ -80,22 +85,22 @@ export default function Dashboard() {
         {/* Top Header */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-[#4046B5]/10 pb-5">
           <div>
-            <span className="mof-stamp px-3 py-0.5 text-xs font-black">لوحة المتابعة والتحليلات 2026</span>
+            <span className="mof-stamp px-3 py-0.5 text-xs font-black">لوحة المتابعة والتحليلات {new Date().getFullYear()}</span>
             <h1 className="mt-2 text-2xl md:text-3xl font-black">{content.dashboard.title}</h1>
             <p className="mt-1 text-xs text-[#5b5c72]">{content.dashboard.subtitle}</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-2 rounded-full border border-[#10B981]/30 bg-[#ECFDF5] px-3.5 py-1.5 text-xs font-black text-[#065F46]">
-              <span className="h-2 w-2 rounded-full bg-[#10B981] animate-ping" />
-              منظومة الضرائب ETA: متصلة 99.98%
+              <span className="flex items-center gap-2 rounded-full border border-[#F59E0B]/30 bg-[#FFFBEB] px-3.5 py-1.5 text-xs font-black text-[#92400E]">
+              <span className="h-2 w-2 rounded-full bg-[#F59E0B]" />
+              وضع تجريبي — مؤشرات مشتقة من بيانات PoC
             </span>
           </div>
         </div>
 
         {dashboard.isLoading ? (
           <div className="mt-12 text-center text-[#4046B5]">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#4046B5] border-t-transparent" />
+            <div className="mx-auto h-10 w-10 motion-safe:animate-spin rounded-full border-4 border-[#4046B5] border-t-transparent" />
             <p className="mt-3 text-xs font-bold">جارٍ تحميل مؤشرات التحويل ومسار العملاء...</p>
           </div>
         ) : (
@@ -228,6 +233,7 @@ export default function Dashboard() {
                 {/* Filter Tabs */}
                 <div className="flex gap-2">
                   <button
+                    aria-pressed={activePersonaFilter === "all"}
                     onClick={() => setActivePersonaFilter("all")}
                     className={`rounded-xl px-3 py-1 text-xs font-bold transition ${
                       activePersonaFilter === "all"
@@ -238,6 +244,7 @@ export default function Dashboard() {
                     الكل
                   </button>
                   <button
+                    aria-pressed={activePersonaFilter === "firm"}
                     onClick={() => setActivePersonaFilter("firm")}
                     className={`rounded-xl px-3 py-1 text-xs font-bold transition ${
                       activePersonaFilter === "firm"
@@ -248,6 +255,7 @@ export default function Dashboard() {
                     مكاتب المحاسبة
                   </button>
                   <button
+                    aria-pressed={activePersonaFilter === "company"}
                     onClick={() => setActivePersonaFilter("company")}
                     className={`rounded-xl px-3 py-1 text-xs font-bold transition ${
                       activePersonaFilter === "company"

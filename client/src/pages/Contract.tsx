@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import content from "@/content/poc.ar.json";
@@ -46,6 +47,7 @@ export default function Contract() {
         nationalId: String(form.get("nationalId") ?? ""),
         commercialRegister: String(form.get("commercialRegister") ?? ""),
         address: String(form.get("address") ?? ""),
+        consent: true as const,
       },
     });
   };
@@ -83,7 +85,7 @@ export default function Contract() {
     return (
       <div className="grid min-h-screen place-items-center bg-[#FBFBFF] text-[#4046B5]">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#4046B5] border-t-transparent" />
+          <div className="mx-auto h-12 w-12 motion-safe:animate-spin rounded-full border-4 border-[#4046B5] border-t-transparent" />
           <p className="mt-4 text-sm font-extrabold text-[#07081A]">جارٍ تحميل العقد والبيانات التعاقدية...</p>
         </div>
       </div>
@@ -96,12 +98,7 @@ export default function Contract() {
         <div className="max-w-md rounded-3xl border border-destructive/20 bg-white p-8 shadow-sm">
           <p className="font-extrabold text-lg text-destructive">تعذر العثور على الطلب</p>
           <p className="mt-2 text-xs text-[#5b5c72]">ارجع إلى صفحة الدفع التجريبي وافتح رابط العقد من جديد.</p>
-          <a
-            href="/checkout"
-            className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#4046B5] px-6 text-xs font-extrabold text-white"
-          >
-            الرجوع للبداية
-          </a>
+          <button type="button" onClick={() => setLocation("/checkout")} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#4046B5] px-6 text-xs font-extrabold text-white">الرجوع للبداية</button>
         </div>
       </div>
     );
@@ -151,12 +148,12 @@ export default function Contract() {
               </Button>
               <div className="hidden h-6 w-px bg-[#4046B5]/15 md:block" />
               <p className="text-xs font-bold text-[#61627a]">
-                العقد الإلكتروني الموثق • جاهز للطباعة والتنزيل
+                نموذج عقد تجريبي • جاهز للمراجعة والطباعة والتنزيل
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#10B981]">
               <ShieldCheck className="h-4 w-4" />
-              عقد رسمي نافذ ومعتمد بالسداد
+              نسخة PoC غير نافذة قانونيًا
             </div>
           </div>
 
@@ -191,7 +188,7 @@ export default function Contract() {
                     onClick={() => void exportPdf(false)}
                     className="rounded-xl bg-white text-xs font-black text-[#4046B5] hover:bg-[#ECECF7]"
                   >
-                    {pdfBusy ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Download className="ml-2 h-4 w-4" />}
+                    {pdfBusy ? <Loader2 className="ml-2 h-4 w-4 motion-safe:animate-spin" /> : <Download className="ml-2 h-4 w-4" />}
                     تنزيل PDF
                   </Button>
                 </div>
@@ -226,7 +223,7 @@ export default function Contract() {
                 <div>
                   <p className="text-xs font-black text-[#4046B5]">02 · تنزيل نسخة PDF</p>
                   <p className="mt-1 text-[11px] leading-5 text-[#606178]">
-                    النسخة الرقمية مطابقة للمعايير القانونية المصرية لخدمات الحوسبة السحابية.
+                    هذه نسخة PDF تجريبية للمراجعة وليست اعتمادًا قانونيًا نهائيًا.
                   </p>
                 </div>
                 <div>
@@ -238,13 +235,10 @@ export default function Contract() {
               </div>
 
               <div className="mt-6 border-t border-[#4046B5]/10 pt-5">
-                <a
-                  href="/dashboard"
-                  className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#4046B5] text-xs font-black text-white hover:bg-[#343aa0]"
-                >
+                <button type="button" onClick={() => setLocation("/dashboard")} className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#4046B5] text-xs font-black text-white hover:bg-[#343aa0]">
                   فتح لوحة تحكم المنظومة
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                </a>
+                  <ExternalLink className="me-2 h-4 w-4" />
+                </button>
               </div>
             </aside>
           </div>
@@ -295,6 +289,7 @@ export default function Contract() {
                 type="email"
                 required
                 dir="ltr"
+                defaultValue={order.data.email}
                 placeholder="name@company.com"
                 className="h-11 rounded-xl border-[#4046B5]/20 text-xs"
               />
@@ -310,6 +305,9 @@ export default function Contract() {
                 type="tel"
                 required
                 dir="ltr"
+                defaultValue={order.data.phone}
+                pattern="01[0125][0-9]{8}"
+                maxLength={11}
                 placeholder="01xxxxxxxxx"
                 className="h-11 rounded-xl border-[#4046B5]/20 text-xs"
               />
@@ -364,19 +362,22 @@ export default function Contract() {
               />
             </div>
 
+            <label className="flex items-start gap-3 rounded-2xl border border-[#4046B5]/15 bg-[#ECECF7]/60 p-4 text-xs leading-6 text-[#33344e] sm:col-span-2">
+              <Checkbox name="consent" required />
+              <span>أقر أنني أراجع بياناتي بنفسي، وأفهم أن هذه الشاشة تنتج نموذج PoC تجريبيًا غير نافذ قانونيًا قبل المراجعة والتوقيع الفعلي.</span>
+            </label>
+
             <Button
               type="submit"
               disabled={create.isPending}
               className="sm:col-span-2 mt-4 h-13 rounded-2xl bg-[#4046B5] text-sm font-black text-white shadow-lg shadow-[#4046B5]/30 hover:bg-[#343aa0]"
             >
-              {create.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+              {create.isPending && <Loader2 className="ml-2 h-4 w-4 motion-safe:animate-spin" />}
               {content.contract.create}
             </Button>
 
             {create.error && (
-              <p className="sm:col-span-2 text-center text-xs font-bold text-destructive">
-                {create.error.message}
-              </p>
+              <p aria-live="polite" className="sm:col-span-2 text-center text-xs font-bold text-destructive">تعذر توليد النموذج. راجع البيانات والموافقة ثم جرّب مرة أخرى.</p>
             )}
           </form>
         </div>
