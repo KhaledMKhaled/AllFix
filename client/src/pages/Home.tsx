@@ -83,6 +83,7 @@ function TaxInvoicingSimulator({ persona, onSelectPlan }: { persona: Persona; on
   const [invoiceCount, setInvoiceCount] = useState<number>(persona === "firm" ? 45 : 15);
   const [whtRate, setWhtRate] = useState<number>(1); // 1%, 3%, 5%
   const [includeVat, setIncludeVat] = useState<boolean>(true);
+  const [needsIssuance, setNeedsIssuance] = useState<boolean>(persona === "firm");
 
   // Computations
   const vatAmount = includeVat ? Math.round(monthlySales * 0.14) : 0;
@@ -99,9 +100,10 @@ function TaxInvoicingSimulator({ persona, onSelectPlan }: { persona: Persona; on
       if (invoiceCount <= 100) return "consultant";
       return "elite";
     } else {
+      if (needsIssuance) return "special";
       return invoiceCount > 25 ? "special" : "founder";
     }
-  }, [persona, invoiceCount]);
+  }, [persona, invoiceCount, needsIssuance]);
 
   return (
     <section id="tax-simulator" className="mof-section relative overflow-hidden bg-gradient-to-b from-[#F3F4FB] via-white to-[#F3F4FB]">
@@ -174,6 +176,16 @@ function TaxInvoicingSimulator({ persona, onSelectPlan }: { persona: Persona; on
                 <span>200+ مستند</span>
               </div>
             </div>
+
+            {persona === "company" && (
+              <label className="mt-7 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#4046B5]/15 bg-[#ECECF7]/60 p-4 text-sm font-bold text-[#07081A]">
+                <Checkbox checked={needsIssuance} onCheckedChange={(value) => setNeedsIssuance(Boolean(value))} />
+                <span>
+                  بتصدر فواتير أو إيصالات إلكترونية؟
+                  <span className="mt-1 block text-xs font-normal leading-6 text-[#64657A]">لو أيوة، الباقة الخاصة هي اللي فيها نقاط الإصدار من أول يوم.</span>
+                </span>
+              </label>
+            )}
 
             {/* Tax Settings */}
             <div className="mt-7 border-t border-[#4046B5]/10 pt-6">
@@ -759,6 +771,13 @@ function PricingSection({
   onSelectPlan: (sku: string) => void;
   now: number;
 }) {
+  const founderPlan = plans.find((plan) => plan.sku === "founder");
+  const specialPlan = plans.find((plan) => plan.sku === "special");
+  const pointsAddon = ADDONS.find((addon) => addon.sku === "points");
+  const userAddon = ADDONS.find((addon) => addon.sku === "user");
+  const posAddon = ADDONS.find((addon) => addon.sku === "pos");
+  const componentValue = (pointsAddon?.annualPiastres ?? 0) + (userAddon?.annualPiastres ?? 0) + (posAddon?.annualPiastres ?? 0);
+
   return (
     <section id="pricing" className="mof-section bg-gradient-to-b from-[#F3F4FB] to-white">
       <div className="container">
@@ -768,8 +787,18 @@ function PricingSection({
             {persona === "firm" ? sales.pricing.firmTitle : sales.pricing.companyTitle}
           </h2>
           <p className="mt-4 text-base leading-8 text-[#5b5c72]">
-            {sales.pricing.body}
+            {persona === "company" ? sales.pricing.companySubtitle : sales.pricing.body}
           </p>
+
+          {persona === "company" && founderPlan && specialPlan && pointsAddon && (
+            <div className="mx-auto mt-6 max-w-3xl rounded-3xl border border-[#10B981]/25 bg-[#F0FDF8] p-5 text-start shadow-sm">
+              <p className="text-sm font-extrabold text-[#065F46]">نفس الـ850 — بس قيمة أكبر لو بتصدر</p>
+              <p className="mt-2 text-sm leading-7 text-[#334155]">
+                {formatEgp(founderPlan.annualPiastres)} + {formatEgp(pointsAddon.annualPiastres)} = {formatEgp(founderPlan.annualPiastres + pointsAddon.annualPiastres)} بالظبط. الباقة الخاصة بنفس الرقم، وجواها مستخدم تاني وPOS بقيمة إضافية {formatEgp((userAddon?.annualPiastres ?? 0) + (posAddon?.annualPiastres ?? 0))}.
+              </p>
+              <p className="mt-2 text-xs font-bold text-[#065F46]">القيمة المجمعة بالقطعة: {formatEgp(componentValue)} — الباقة الخاصة: {formatEgp(specialPlan.annualPiastres)}</p>
+            </div>
+          )}
 
           {/* Annual Plan Assurance Badge */}
           <div className="mt-8 inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-[#10B981]/30 bg-white px-5 py-3 text-xs font-black text-[#065F46] shadow-sm">
@@ -801,8 +830,10 @@ function PricingSection({
               <article
                 key={plan.sku}
                 className={`relative flex min-w-0 flex-col justify-between rounded-[2.2rem] border p-6 transition-all duration-300 hover:-translate-y-2 ${
-                  isFeatured
-                    ? "border-[#4046B5] bg-[#F7F7FF] shadow-[0_25px_60px_-30px_#4046B5] ring-2 ring-[#4046B5]/20 hover:shadow-[0_35px_70px_-25px_#4046B5]"
+                    isFeatured
+                      ? persona === "company"
+                        ? "border-[#10B981] bg-[#F0FDF8] shadow-[0_25px_60px_-30px_rgba(16,185,129,0.35)] ring-2 ring-[#10B981]/20 hover:shadow-[0_35px_70px_-25px_rgba(16,185,129,0.35)] md:scale-[1.02]"
+                        : "border-[#4046B5] bg-[#F7F7FF] shadow-[0_25px_60px_-30px_#4046B5] ring-2 ring-[#4046B5]/20 hover:shadow-[0_35px_70px_-25px_#4046B5]"
                     : "border-[#4046B5]/12 bg-white shadow-sm hover:shadow-xl hover:border-[#4046B5]/30"
                 }`}
               >
