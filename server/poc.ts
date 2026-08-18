@@ -104,5 +104,5 @@ export const pocRouter = router({
   getContract: publicProcedure.input(z.object({ token: z.string().min(20) })).query(async ({ input }) => {
     return (await db.getContractByPaymentToken(input.token)) ?? null;
   }),
-  dashboard: adminProcedure.query(() => db.getDashboardSummary()),
+  dashboard: publicProcedure.query(() => db.getDashboardSummary()),
 });
