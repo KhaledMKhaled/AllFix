@@ -144,6 +144,8 @@ export function orderPublicView(order: DemoOrder) {
     status: order.status,
     expiresAt: order.paymentExpiresAt,
     customerName: order.customerName,
+    email: order.email,
+    phone: order.phone,
     persona: order.persona,
     paidAt: order.paidAt,
     fawryCode: demoFawryCode(order.orderId),

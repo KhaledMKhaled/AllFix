@@ -12,7 +12,7 @@ const eventSchema = z.object({
   firstTouch: touchSchema, lastTouch: touchSchema, consentAnalytics: z.boolean(), consentMarketing: z.boolean(), properties: z.record(z.string(), z.unknown()).optional(),
 });
 
-const contractSchema = z.object({ customerName: z.string().min(2).max(160), taxCard: z.string().max(80).optional(), nationalId: z.string().max(80).optional(), commercialRegister: z.string().max(80).optional(), address: z.string().max(400).optional(), email: z.string().email().max(320), phone: z.string().min(6).max(30) });
+const contractSchema = z.object({ customerName: z.string().min(2).max(160), taxCard: z.string().max(80).optional(), nationalId: z.string().max(80).optional(), commercialRegister: z.string().max(80).optional(), address: z.string().max(400).optional(), email: z.string().email().max(320), phone: z.string().min(6).max(30), consent: z.literal(true) });
 
 export const pocRouter = router({
   config: publicProcedure.query(() => ({ plans: PLANS, addons: ADDONS, promo: PROMO, analytics: ANALYTICS_DEMO_CONFIG })),
