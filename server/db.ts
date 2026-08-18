@@ -127,6 +127,11 @@ export async function getOrderByPaymentToken(token: string): Promise<DemoOrder |
   return result[0] as DemoOrder | undefined;
 }
 
+function demoFawryCode(orderId: string) {
+  const digits = createHash("sha256").update(orderId).digest("hex").replace(/[^0-9]/g, "").padEnd(9, "7").slice(0, 9);
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export function orderPublicView(order: DemoOrder) {
   return {
     orderId: order.orderId,
@@ -139,6 +144,10 @@ export function orderPublicView(order: DemoOrder) {
     status: order.status,
     expiresAt: order.paymentExpiresAt,
     customerName: order.customerName,
+    persona: order.persona,
+    paidAt: order.paidAt,
+    fawryCode: demoFawryCode(order.orderId),
+    paymentAddress: "mofawtar@instapay",
     addons: order.addons || [],
   };
 }
