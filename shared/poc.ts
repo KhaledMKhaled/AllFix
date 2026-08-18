@@ -22,6 +22,7 @@ export type Addon = {
   annualPiastres: number;
   description: string;
   salesCue: string;
+  persona?: Persona | "both";
   includedIn?: string[];
 };
 
@@ -55,20 +56,28 @@ export const PLANS: Plan[] = [
 export const ADDONS: Addon[] = [
   {
     sku: "points", name: "حزمة الإصدار: 9600 نقطة", annualPiastres: 60000, description: "رصيد لإصدار الفواتير والإيصالات ضمن تجربة موحدة.",
-    salesCue: "أضفها عندما تريد تحويل الباقة الأساسية إلى مسار إصدار عملي.", includedIn: ["special"],
+    salesCue: "أضفها عندما تريد تحويل الباقة الأساسية إلى مسار إصدار عملي.", persona: "company", includedIn: ["special"],
   },
   {
     sku: "pos", name: "جهاز POS إضافي", annualPiastres: 50000, description: "جهاز إضافي لكل ملف ضريبي يحتاج نقطة بيع منفصلة.",
-    salesCue: "اختره فقط عند وجود نقطة بيع أو ملف يحتاج جهازًا مستقلاً.",
+    salesCue: "اختره فقط عند وجود نقطة بيع أو ملف يحتاج جهازًا مستقلاً.", persona: "company",
   },
   {
     sku: "user", name: "مستخدم إضافي", annualPiastres: 5000, description: "أضف مقعدًا جديدًا بصلاحيات مستقلة لفريقك.",
-    salesCue: "أفضل ترقية عندما يتوقف العمل على مشاركة حساب واحد بين أكثر من شخص.",
+    salesCue: "أفضل ترقية عندما يتوقف العمل على مشاركة حساب واحد بين أكثر من شخص.", persona: "both",
   },
 ];
 
 export function getPlansForPersona(persona: Persona) {
   return PLANS.filter(plan => plan.persona === persona);
+}
+
+export function getAddonsForPersona(persona: Persona) {
+  return ADDONS.filter(addon => !addon.persona || addon.persona === "both" || addon.persona === persona);
+}
+
+export function resolvePersona(value: string | null | undefined): Persona | null {
+  return value === "firm" || value === "company" ? value : null;
 }
 
 export const PROMO = {
@@ -191,4 +200,8 @@ export function calculateQuote(
   };
 }
 
-export function formatEgp(piastres: number) { return new Intl.NumberFormat("ar-EG", { style: "currency", currency: "EGP", maximumFractionDigits: 2 }).format(piastres / 100); }
+const egpFormatter = new Intl.NumberFormat("ar-EG-u-nu-latn", { maximumFractionDigits: 0 });
+
+export function formatEgp(piastres: number) {
+  return `${egpFormatter.format(Math.round(piastres / 100))} ج.م`;
+}

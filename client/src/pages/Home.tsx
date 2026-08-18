@@ -4,7 +4,7 @@ import layout from "@/content/layout.ar.json";
 import claims from "@/content/claims.ar.json";
 import { getPocContext, usePocTracking } from "@/hooks/usePocTracking";
 import { trpc } from "@/lib/trpc";
-import { ADDONS, calculateQuote, formatEgp, getPlansForPersona, isCampaignActive, PROMO, serializeAddonQuantities, type AddonQuantities, type Persona, type Plan } from "@shared/poc";
+import { ADDONS, calculateQuote, formatEgp, getPlansForPersona, isCampaignActive, PROMO, resolvePersona, serializeAddonQuantities, type AddonQuantities, type Persona, type Plan } from "@shared/poc";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -48,10 +48,11 @@ import {
   Trash2
 } from "lucide-react";
 import { FormEvent, type RefObject, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 
 type Consent = { analytics: boolean; marketing: boolean };
-const WHATSAPP_URL = "https://wa.me/201000000000?text=" + encodeURIComponent("مرحبًا، أريد مساعدة لاختيار باقة موفوتر المناسبة لحجم شغلي.");
+const VERIFIED_WHATSAPP_PHONE = "201050996319";
+const WHATSAPP_URL = `https://wa.me/${VERIFIED_WHATSAPP_PHONE}?text=${encodeURIComponent("مرحبًا، أريد مساعدة لاختيار باقة موفوتر المناسبة لحجم شغلي.")}`;
 
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -494,11 +495,13 @@ function PersonaHero({
   onSwitchPersona,
   onPrimary,
   onSecondary,
+  showPersonaSwitcher = true,
 }: {
   persona: Persona;
-  onSwitchPersona: (value: Persona) => void;
+  onSwitchPersona?: (value: Persona) => void;
   onPrimary: () => void;
   onSecondary: () => void;
+  showPersonaSwitcher?: boolean;
 }) {
   const content = sales[persona];
   const visual = content.visual;
@@ -511,7 +514,7 @@ function PersonaHero({
 
       <div className="container relative z-10">
         {/* Persona Switcher Bar */}
-        <div className="mx-auto mb-8 flex max-w-md items-center justify-center rounded-2xl border border-[#4046B5]/15 bg-white/90 p-1.5 shadow-sm backdrop-blur-md">
+        {showPersonaSwitcher && onSwitchPersona ? <div className="mx-auto mb-8 flex max-w-md items-center justify-center rounded-2xl border border-[#4046B5]/15 bg-white/90 p-1.5 shadow-sm backdrop-blur-md">
           <button
             onClick={() => onSwitchPersona("firm")}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-extrabold transition-all duration-200 ${
@@ -534,7 +537,7 @@ function PersonaHero({
             <Building2 className="h-4 w-4" />
             للشركات والمحاسب المستقل
           </button>
-        </div>
+        </div> : null}
 
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="mof-reveal">
@@ -748,11 +751,13 @@ function PricingSection({
   plans,
   selectedPlanSku,
   onSelectPlan,
+  now,
 }: {
   persona: Persona;
   plans: Plan[];
   selectedPlanSku: string;
   onSelectPlan: (sku: string) => void;
+  now: number;
 }) {
   return (
     <section id="pricing" className="mof-section bg-gradient-to-b from-[#F3F4FB] to-white">
@@ -767,9 +772,10 @@ function PricingSection({
           </p>
 
           {/* Annual Plan Assurance Badge */}
-          <div className="mt-8 inline-flex items-center gap-2 rounded-2xl border border-[#10B981]/30 bg-white px-5 py-3 text-xs font-black text-[#065F46] shadow-sm">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#10B981] animate-pulse" />
+          <div className="mt-8 inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-[#10B981]/30 bg-white px-5 py-3 text-xs font-black text-[#065F46] shadow-sm">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#10B981] motion-safe:animate-pulse" />
             اشتراك سنوي شامل (12 شهرًا) • يتضمن التحديثات الدورية والدعم الفني والربط مع منظومة الضرائب المصرية ETA
+            {isCampaignActive(new Date(now)) && <span className="text-[#4046B5]">العرض مستمر: {timeLeft(now)}</span>}
           </div>
         </div>
 
@@ -785,6 +791,10 @@ function PricingSection({
             const isFeatured = plan.featured;
             const isSelected = selectedPlanSku === plan.sku;
             const price = plan.annualPiastres;
+            const campaignActive = isCampaignActive(new Date(now));
+            const discountPiastres = campaignActive ? Math.floor((price * PROMO.discountBps) / 10000) : 0;
+            const discountedPrice = price - discountPiastres;
+            const vatPiastres = Math.round((discountedPrice * 14) / 100);
             const monthlyPerFile = ((plan.annualPiastres / 100) / plan.fileCount / 12).toFixed(1);
 
             return (
@@ -809,12 +819,14 @@ function PricingSection({
 
                   {/* Price Section */}
                   <div className="mt-5 rounded-2xl bg-[#ECECF7]/60 p-4 text-center">
-                    <p className="font-[Inter] text-3xl font-black text-[#07081A]" dir="ltr">
-                      {formatEgp(price)}
+                    {campaignActive && <p className="font-inter text-sm font-bold text-[#64657a] line-through" dir="ltr">{formatEgp(price)}</p>}
+                    <p className="font-inter text-3xl font-black tabular-nums text-[#4046B5]" dir="ltr">
+                      {formatEgp(discountedPrice)}
                     </p>
                     <p className="mt-1 text-[11px] font-bold text-[#64657a]">
-                      اشتراك سنوي (قبل ضريبة 14% VAT)
+                      اشتراك سنوي قبل الضريبة {campaignActive ? `— وفّرت ${formatEgp(discountPiastres)}` : ""}
                     </p>
+                    <p className="mt-1 text-[11px] font-bold text-[#07081A]">+ 14% VAT = {formatEgp(discountedPrice + vatPiastres)} إجمالي مستحق</p>
 
                     {persona === "firm" && (
                       <div className="mt-2.5 inline-flex items-center gap-1 rounded-full bg-[#4046B5] px-3 py-1 font-[Inter] text-xs font-black text-white">
@@ -1002,17 +1014,18 @@ function MofawtarFooter({
 // ---------------------------------------------------------------------------
 // 8. Main Home Component
 // ---------------------------------------------------------------------------
-export default function Home() {
+export default function Home({ fixedPersona }: { fixedPersona?: Persona } = {}) {
   const [, setLocation] = useLocation();
   const track = usePocTracking();
   const trackRef = useRef(track);
   trackRef.current = track;
 
-  const [persona, setPersona] = useState<Persona>("firm");
+  const [persona, setPersona] = useState<Persona>(fixedPersona ?? "firm");
   const [gateOpen, setGateOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [offerDismissed, setOfferDismissed] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [sessionQuoteDate] = useState(() => new Date());
   const [selectedPlanSku, setSelectedPlanSku] = useState("professional");
   const [addonQuantities, setAddonQuantities] = useState<AddonQuantities>({});
   const [consent, setConsent] = useState<Consent | null>(null);
@@ -1041,21 +1054,21 @@ export default function Home() {
   const activeDemoItem = layout.demo.tabs[activeDemoTab] ?? layout.demo.tabs[0];
 
   useEffect(() => {
-    const queryPersona = new URLSearchParams(window.location.search).get("p") as Persona | null;
-    const savedPersona = localStorage.getItem("mof_persona") as Persona | null;
-    const resolved = queryPersona === "firm" || queryPersona === "company" ? queryPersona : savedPersona;
+    const params = new URLSearchParams(window.location.search);
+    const queryPersona = resolvePersona(params.get("persona") ?? params.get("p"));
+    const savedPersona = resolvePersona(localStorage.getItem("mof_persona"));
+    const resolved = fixedPersona ?? queryPersona ?? savedPersona;
     if (resolved) {
       setPersona(resolved);
-      setSelectedPlanSku(getPlansForPersona(resolved).find((p) => p.featured)?.sku ?? getPlansForPersona(resolved)[0].sku);
-      trackRef.current("persona_resolved", { persona: resolved, uiContext: queryPersona ? "utm" : "storage" });
-    } else {
-      setGateOpen(true);
-      trackRef.current("persona_gate_shown", { uiContext: "first_visit" });
+      const entryPlan = getPlansForPersona(resolved).find((p) => p.sku === (resolved === "firm" ? "professional" : "founder")) ?? getPlansForPersona(resolved)[0];
+      setSelectedPlanSku(entryPlan.sku);
+      localStorage.setItem("mof_persona", resolved);
+      trackRef.current("persona_resolved", { persona: resolved, uiContext: fixedPersona ? "route" : queryPersona ? "query" : "storage" });
     }
     setConsent(readConsent());
     setInitialized(true);
-    trackRef.current("page_view", { persona: resolved ?? "firm", uiContext: "landing" });
-  }, []);
+    trackRef.current("page_view", { persona: resolved ?? "firm", uiContext: fixedPersona ? "landing_persona" : "landing" });
+  }, [fixedPersona]);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
@@ -1093,13 +1106,28 @@ export default function Home() {
   }, [persona]);
 
   useEffect(() => {
-    if (!initialized || gateOpen || leadMagnetDismissed || leadMagnetDelivered) return;
-    const timeout = window.setTimeout(() => {
-      setLeadMagnetOpen(true);
-      trackRef.current("lead_magnet_shown", { persona, uiContext: "payroll_calculator_popup" });
-    }, 12000);
-    return () => window.clearTimeout(timeout);
-  }, [gateOpen, initialized, leadMagnetDelivered, leadMagnetDismissed, persona]);
+    if (!initialized || gateOpen || leadMagnetDismissed || leadMagnetDelivered || !consent) return;
+    let opened = false;
+    const maybeOpen = () => {
+      if (opened || leadMagnetDelivered || leadMagnetDismissed) return;
+      const touchedPricing = sessionStorage.getItem("mof_pricing_touched") === "1";
+      const depth = (window.scrollY + window.innerHeight) / Math.max(document.documentElement.scrollHeight, 1);
+      const startedAt = Number(sessionStorage.getItem("mof_visit_started") ?? Date.now());
+      if (!touchedPricing && (depth >= 0.6 || Date.now() - startedAt >= 45000)) {
+        opened = true;
+        setLeadMagnetOpen(true);
+        trackRef.current("lead_magnet_shown", { persona, uiContext: "payroll_calculator_popup" });
+        window.removeEventListener("scroll", maybeOpen);
+      }
+    };
+    if (!sessionStorage.getItem("mof_visit_started")) sessionStorage.setItem("mof_visit_started", String(Date.now()));
+    const timeout = window.setTimeout(maybeOpen, 45000);
+    window.addEventListener("scroll", maybeOpen, { passive: true });
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("scroll", maybeOpen);
+    };
+  }, [consent, gateOpen, initialized, leadMagnetDelivered, leadMagnetDismissed, persona]);
 
   useEffect(() => {
     if (!initialized || !consent) return;
@@ -1117,7 +1145,7 @@ export default function Home() {
   }, [consent, gateOpen, initialized, persona]);
 
   const choosePersona = (value: Persona, context: string) => {
-    const first = getPlansForPersona(value).find((p) => p.featured) ?? getPlansForPersona(value)[0];
+    const first = getPlansForPersona(value).find((p) => p.sku === (value === "firm" ? "professional" : "founder")) ?? getPlansForPersona(value)[0];
     localStorage.setItem("mof_persona", value);
     setPersona(value);
     setSelectedPlanSku(first.sku);
@@ -1128,6 +1156,7 @@ export default function Home() {
   };
 
   const selectPlan = (sku: string) => {
+    sessionStorage.setItem("mof_pricing_touched", "1");
     setSelectedPlanSku(sku);
     setAddonQuantities({});
     track("plan_selected", { persona, uiContext: "pricing_card", properties: { plan_sku: sku } });
@@ -1164,6 +1193,7 @@ export default function Home() {
     if (!selectedPlan) return;
     const serializedAddons = serializeAddonQuantities(addonQuantities);
     sessionStorage.setItem("mof_selected_plan", selectedPlan.sku);
+    sessionStorage.setItem("mof_persona", persona);
     sessionStorage.setItem("mof_selected_addons", serializedAddons);
     track("checkout_started", {
       persona,
@@ -1177,11 +1207,11 @@ export default function Home() {
   const liveQuote = useMemo(() => {
     if (!selectedPlan) return null;
     try {
-      return calculateQuote(selectedPlan.sku, addonQuantities, "annual", new Date(now));
+      return calculateQuote(selectedPlan.sku, addonQuantities, "annual", sessionQuoteDate);
     } catch {
       return null;
     }
-  }, [selectedPlan, addonQuantities, now]);
+  }, [selectedPlan, addonQuantities, sessionQuoteDate]);
 
   const whatsapp = (placement: string) => {
     sessionStorage.setItem("mof_conversion_blocked", "whatsapp");
@@ -1281,6 +1311,10 @@ export default function Home() {
   }, [faqSearch]);
 
   const activeCampaign = isCampaignActive(new Date(now));
+  const minPricePiastres = Math.min(...plans.map((plan) => plan.annualPiastres));
+  const crossPersona = persona === "firm"
+    ? { href: "/companies", label: "عندك شركة أو بتشتغل لحسابك؟ شوف نسخة الشركات ←" }
+    : { href: "/accounting-offices", label: "عندك مكتب محاسبة؟ شوف نسخة المكاتب ←" };
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#FBFBFF] text-[#07081A]">
@@ -1323,7 +1357,7 @@ export default function Home() {
       {/* 2. Main Header */}
       <header className="sticky top-0 z-40 border-b border-[#4046B5]/10 bg-white/90 backdrop-blur-xl">
         <div className="container flex h-20 items-center justify-between gap-4">
-          <button onClick={() => setGateOpen(true)} className="group flex items-center gap-3 text-right">
+          <Link href="/" className="group flex items-center gap-3 text-right">
             <div className="inline-flex rounded-xl p-1 transition hover:opacity-90">
               <img src="/brand/mofawtar-badge-logo.png" alt="مفوتر" className="h-10 w-auto" />
             </div>
@@ -1331,7 +1365,7 @@ export default function Home() {
               {persona === "firm" ? "مسار مكاتب المحاسبة" : "مسار الشركات والمحاسبين"}
               <span className="mt-0.5 block font-extrabold text-[#4046B5] group-hover:underline">تبديل المسار</span>
             </span>
-          </button>
+          </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-extrabold lg:flex">
             <button onClick={() => scrollToId("tax-simulator")} className="transition hover:text-[#4046B5]">
@@ -1368,6 +1402,7 @@ export default function Home() {
         {/* Hero */}
         <PersonaHero
           persona={persona}
+          showPersonaSwitcher={!fixedPersona}
           onSwitchPersona={(p) => choosePersona(p, "hero_toggle")}
           onPrimary={() => {
             track("hero_cta_clicked", { persona, uiContext: "hero_primary" });
@@ -1375,6 +1410,13 @@ export default function Home() {
           }}
           onSecondary={handleHeroSecondary}
         />
+
+        <div className="container pt-6 text-center">
+          <Link href={crossPersona.href} className="text-sm font-bold text-[#4046B5] underline underline-offset-4 hover:text-[#343aa0]">
+            {crossPersona.label}
+          </Link>
+          <p className="mt-2 text-xs text-[#64657a]">باقات تبدأ من {formatEgp(minPricePiastres)} سنويًا</p>
+        </div>
 
         {/* Interactive Tax & Invoicing Simulator */}
         <TaxInvoicingSimulator
@@ -1531,6 +1573,7 @@ export default function Home() {
           plans={plans}
           selectedPlanSku={selectedPlanSku}
           onSelectPlan={selectPlan}
+          now={now}
         />
 
         {/* Upsell / Addons Section */}
