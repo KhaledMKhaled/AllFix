@@ -69,7 +69,7 @@ export default function Success() {
           {/* Animated Stamp Celebration */}
           <div className="relative mx-auto grid h-20 w-20 place-items-center">
             <div className="absolute inset-0 rounded-full bg-[#10B981]/20 animate-ping" />
-            <div className="relative grid h-20 w-20 place-items-center rounded-full bg-[#10B981] text-white shadow-lg">
+            <div className="relative grid h-20 w-20 place-items-center rounded-full bg-gradient-to-tr from-[#059669] to-[#10B981] text-white shadow-[0_0_40px_rgba(16,185,129,0.4)]">
               <CheckCircle2 className="h-10 w-10" />
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function Success() {
           </div>
 
           {/* Stamped Receipt Box */}
-          <div className="mt-8 rounded-3xl border border-[#4046B5]/15 bg-[#FBFBFF] p-6 text-right relative overflow-hidden">
+          <div className="mt-8 rounded-3xl border border-[#4046B5]/20 bg-white p-6 text-right relative overflow-hidden shadow-[0_15px_40px_-15px_rgba(0,0,0,0.05)]">
             {/* Official Stamp Watermark */}
             <img
               src="/brand/mofawtar-official-stamp.png"
@@ -178,7 +178,7 @@ export default function Success() {
           {/* Primary Action Button */}
           <Button
             onClick={() => setLocation(`/contract/${token}`)}
-            className="mt-8 h-14 w-full rounded-2xl bg-[#4046B5] text-base font-black text-white shadow-lg shadow-[#4046B5]/30 transition hover:bg-[#343aa0] hover:scale-[1.01] active:scale-99"
+            className="mt-8 h-14 w-full rounded-2xl bg-gradient-to-r from-[#4046B5] to-[#272d82] text-base font-black text-white shadow-lg shadow-[#4046B5]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#4046B5]/40 hover:scale-[1.01] active:scale-99"
           >
             الانتقال لتوثيق العقد الإلكتروني الرسمي
             <ArrowLeft className="mr-2 h-5 w-5" />

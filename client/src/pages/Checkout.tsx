@@ -284,10 +284,10 @@ export default function Checkout() {
                   return (
                     <label
                       key={item.sku}
-                      className={`flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition ${
+                      className={`flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all duration-300 ${
                         isCurrent
-                          ? "border-[#4046B5] bg-[#ECECF7]/80 ring-2 ring-[#4046B5]/20"
-                          : "border-[#4046B5]/12 hover:border-[#4046B5]/30 bg-white"
+                          ? "border-[#4046B5] bg-[#ECECF7]/80 ring-2 ring-[#4046B5]/40 shadow-md shadow-[#4046B5]/10 scale-[1.01]"
+                          : "border-[#4046B5]/12 bg-white hover:border-[#4046B5]/30 hover:shadow-md"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -362,12 +362,12 @@ export default function Checkout() {
                   return (
                     <div
                       key={item.sku}
-                      className={`flex flex-col justify-between rounded-2xl border-2 p-4 transition-all duration-200 ${
+                      className={`flex flex-col justify-between rounded-2xl border-2 p-4 transition-all duration-300 ${
                         included
                           ? "border-[#10B981]/40 bg-[#10B981]/10"
                           : isChecked
-                          ? "border-[#10B981] bg-[#ECFDF5] ring-2 ring-[#10B981]/20 shadow-xs"
-                          : "border-[#4046B5]/15 bg-white hover:border-[#4046B5]/30 hover:bg-[#FBFBFF]"
+                          ? "border-[#10B981] bg-[#ECFDF5] ring-2 ring-[#10B981]/40 shadow-md shadow-[#10B981]/10 scale-[1.02]"
+                          : "border-[#4046B5]/15 bg-white hover:border-[#4046B5]/40 hover:bg-slate-50 hover:shadow-md"
                       }`}
                     >
                       <div>
@@ -377,12 +377,12 @@ export default function Checkout() {
                               type="button"
                               disabled={included}
                               onClick={() => toggleAddon(item.sku)}
-                              className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 transition-all ${
+                              className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 transition-all duration-300 ${
                                 included
                                   ? "border-[#10B981] bg-[#10B981] text-white cursor-default"
                                   : isChecked
-                                  ? "border-[#10B981] bg-[#10B981] text-white shadow-xs cursor-pointer"
-                                  : "border-[#4046B5]/30 bg-white text-transparent hover:border-[#4046B5] cursor-pointer"
+                                  ? "border-[#10B981] bg-[#10B981] text-white shadow-md shadow-[#10B981]/40 cursor-pointer scale-110"
+                                  : "border-[#4046B5]/40 bg-[#F7F7FF] text-transparent hover:border-[#10B981] hover:bg-[#10B981]/10 cursor-pointer"
                               }`}
                               title={included ? "متضمنة في الباقة" : isChecked ? "إلغاء التحديد" : "إضافة إلى الطلب"}
                             >
@@ -499,7 +499,7 @@ export default function Checkout() {
             <Button
               type="submit"
               disabled={createOrder.isPending || !quote.data}
-              className="mt-9 h-14 w-full rounded-2xl bg-[#4046B5] text-base font-black text-white shadow-lg shadow-[#4046B5]/30 transition hover:bg-[#343aa0] hover:scale-[1.01] active:scale-99"
+              className="mt-9 h-14 w-full rounded-2xl bg-gradient-to-r from-[#4046B5] to-[#272d82] text-base font-black text-white shadow-lg shadow-[#4046B5]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#4046B5]/40 hover:scale-[1.01] active:scale-99"
             >
               {createOrder.isPending ? "جارٍ إعداد أمر الدفع..." : "متابعة لتأكيد الدفع التجريبي"}
               <LockKeyhole className="mr-2 h-4 w-4" />
@@ -513,7 +513,7 @@ export default function Checkout() {
           </form>
 
           {/* Sticky Order Summary Card */}
-          <aside className="rounded-[2.2rem] border border-white/10 bg-[#07081A] p-7 text-white shadow-2xl lg:sticky lg:top-8">
+          <aside className="rounded-[2.2rem] border border-[#4046B5]/30 bg-gradient-to-b from-[#07081A] to-[#0A0B22] p-7 text-white shadow-[0_30px_60px_-15px_rgba(64,70,181,0.2)] lg:sticky lg:top-8">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <span className="mof-stamp-white px-3 py-1 text-xs">ملخص أمر الشراء</span>
               <span className="text-xs font-bold text-[#b9bdff]">موفوتر 2026</span>

@@ -790,10 +790,10 @@ function PricingSection({
             return (
               <article
                 key={plan.sku}
-                className={`relative flex min-w-0 flex-col justify-between rounded-[2.2rem] border p-6 transition-all duration-300 hover:-translate-y-1.5 ${
+                className={`relative flex min-w-0 flex-col justify-between rounded-[2.2rem] border p-6 transition-all duration-300 hover:-translate-y-2 ${
                   isFeatured
-                    ? "border-[#4046B5] bg-[#F7F7FF] shadow-[0_25px_60px_-30px_#4046B5] ring-2 ring-[#4046B5]/20"
-                    : "border-[#4046B5]/12 bg-white shadow-sm hover:shadow-md"
+                    ? "border-[#4046B5] bg-[#F7F7FF] shadow-[0_25px_60px_-30px_#4046B5] ring-2 ring-[#4046B5]/20 hover:shadow-[0_35px_70px_-25px_#4046B5]"
+                    : "border-[#4046B5]/12 bg-white shadow-sm hover:shadow-xl hover:border-[#4046B5]/30"
                 }`}
               >
                 {plan.badge && (
@@ -1568,12 +1568,12 @@ export default function Home() {
                   return (
                     <div
                       key={addon.sku}
-                      className={`relative flex flex-col justify-between rounded-3xl border-2 p-6 transition-all duration-200 ${
+                      className={`relative flex flex-col justify-between rounded-3xl border-2 p-6 transition-all duration-300 ${
                         included
                           ? "border-[#10B981]/50 bg-[#10B981]/10 text-white"
                           : isSelected
-                          ? "border-[#10B981] bg-[#10B981]/15 text-white shadow-[0_0_25px_rgba(16,185,129,0.3)] ring-2 ring-[#10B981]/40"
-                          : "border-white/20 bg-white/[.06] hover:border-white/30 text-white"
+                          ? "border-[#10B981] bg-[#10B981]/15 text-white shadow-[0_0_30px_rgba(16,185,129,0.3)] ring-2 ring-[#10B981]/40"
+                          : "border-white/25 bg-white/[.04] hover:border-white/40 hover:bg-white/[.06] text-white"
                       }`}
                     >
                       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -1584,12 +1584,12 @@ export default function Home() {
                             type="button"
                             disabled={included}
                             onClick={() => toggleAddon(addon.sku)}
-                            className={`mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-xl border-2 transition-all duration-200 ${
+                            className={`mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-xl border-2 transition-all duration-300 ${
                               included
                                 ? "border-[#10B981] bg-[#10B981] text-white shadow-xs cursor-default"
                                 : isSelected
-                                ? "border-[#10B981] bg-[#10B981] text-white shadow-md shadow-[#10B981]/40 cursor-pointer"
-                                : "border-white/50 bg-white/10 text-transparent hover:border-white cursor-pointer"
+                                ? "border-[#10B981] bg-[#10B981] text-white shadow-lg shadow-[#10B981]/40 cursor-pointer scale-110"
+                                : "border-white/50 bg-[#0F102A] text-transparent hover:border-[#10B981] hover:bg-[#10B981]/10 cursor-pointer"
                             }`}
                             title={included ? "متضمنة في الباقة" : isSelected ? "إلغاء التحديد" : "إضافة إلى الخطة"}
                           >
